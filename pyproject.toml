@@ -1,0 +1,21 @@
+[project]
+name = "receiptreader"
+authors = [
+  {name = "Humming", email = "hanmingsan@outlook.com"},
+]
+version = "0.1.0"
+description = "This is Receipt Reader, on Apple devices, it reads your receipt and automatically keep your spendings for you."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "pandas",
+  "numpy",
+  "transformers[torch]",
+  "datasets",
+  "trl",
+  "dotenv",
+  "easyocr>=1.7.2",
+  "jupyter>=1.1.1",
+  "torch>=2.10.0",
+  "torchvision>=0.25.0",
+]
