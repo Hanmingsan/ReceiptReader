@@ -17,7 +17,7 @@ api_key = os.getenv('GEMINI_API_KEY')
 base_url = 'https://generativelanguage.googleapis.com/v1beta/openai/'
 
 raw_img_dir = './raw_dataset'
-label_file = './file.jsonl'
+label_file = './dataset.jsonl'
 
 oc = ocr.ocr()
 
@@ -163,6 +163,13 @@ def process_one_img(r_img_dir: str, r_img: str) -> tuple[str, str, Bill] | None:
     print("obtaining VLM result...")
     bill = get_gemini_response(system_prompt, img_type, b64img)
 
+    if not bill tries = 1
+    while not bill:
+        print("obtaining VLM result... Again...")
+        bill = get_gemini_response(system_prompt, img_type, b64img)
+        tries += 1
+        if tries >= 3 break
+
     print("=" * 74)
     print(img_path)
     print("-" * 74)
@@ -182,7 +189,7 @@ def main():
     if not os.path.exists(raw_img_dir):
         raise ValueError("target directory for raw image not found")
 
-    valid_exts = {'.jpg', '.jpeg', '.png', '.webp'}
+    valid_exts = {'.png', '.webp'}
     r_imgs = [
         i for i in os.listdir(raw_img_dir)
         if not os.path.isdir(os.path.join(raw_img_dir, i))
