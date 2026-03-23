@@ -1,7 +1,7 @@
 from transformers import AutoTokenizer
 from transformers import AutoModelForCausalLM
 from transformers import TrainingArguments
-import torch
+from dataset import Dataset
 import json
 
 # Model & Preprocessor Loading
@@ -37,9 +37,29 @@ unfolded_ids = labels.unfold(1,pattern.size(-1),1)
 print(unfolded_ids)
 
 for item_idx in range(len(unfolded_ids)): # Iterating the sentences
-    pass
+    for batch_idx in range(len(unfolded_ids[item_idx])): # Iterating batches
+        if (unfolded_ids[item_idx][batch_idx] == pattern).all():
+            labels[item_idx][0:batch_idx+len(pattern)] = -100
+            # Pattern matched, and i is the index.
 
+## Dataset is in three vars: input_ids_tokenized, attention_mask, labels
 
+## Form dataset acceptable for transformers trainer
+class ReceiptDataset(Dataset):
+    def __init__(self, input_ids_tokenized, attention_mask, labels):
+        self.input_ids = input_ids_tokenized
+        self.attention_mask = attention_mask
+        self.label = labels
+    def __len__(self):
+        return len(self.labels)
+    def __getitem__(self, idx):
+        return {
+            "input_ids": self.input_ids[idx],
+            "attention_mask": self.attention_mask[idx],
+            "labels": self.labels[idx],
+        }
 
 # Training Sector
+
+
 
