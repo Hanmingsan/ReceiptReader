@@ -86,8 +86,8 @@ Ensure the output is a valid JSON object matching this schema:
 }
 ```
 
-Do NOT include things like triple backtick or single backtick to wrap code. Simply return pure json string.
-Notice, datetime might be in the English form, where it is displayed as dd/mm/yy.
+Do NOT include things like triple backtick or single backtick to wrap code. Simply return **pure** json string.
+Notice, datetime **might** be in the English form, where it is displayed as dd/mm/yy.
 """
 
 def get_base64_img(r_img_dir: str, r_img: str) -> tuple[str, str]:
@@ -129,7 +129,6 @@ def get_gemini_response(system_prompt: str, img_type: str, base64_img: str) -> B
         print('request received')
         message = response.choices[0].message.content
 
-        # FIX: parse as JSON dict and validate with Pydantic instead of returning a raw regex tuple
         parsed = json.loads(message)
         bill = Bill(**parsed)
         return bill
@@ -145,7 +144,7 @@ def get_gemini_response(system_prompt: str, img_type: str, base64_img: str) -> B
         return None
 
 def get_ocr_result(r_img_dir: str, r_img: str) -> str:
-    return oc.after_care(oc.infer(os.path.join(r_img_dir, r_img)))  # FIX: removed trailing comma
+    return oc.after_care(oc.infer(os.path.join(r_img_dir, r_img)))  
 
 def process_one_img(r_img_dir: str, r_img: str) -> tuple[str, str, Bill] | None:
     """
@@ -163,12 +162,14 @@ def process_one_img(r_img_dir: str, r_img: str) -> tuple[str, str, Bill] | None:
     print("obtaining VLM result...")
     bill = get_gemini_response(system_prompt, img_type, b64img)
 
-    if not bill tries = 1
+    if not bill: 
+        tries = 1
     while not bill:
         print("obtaining VLM result... Again...")
         bill = get_gemini_response(system_prompt, img_type, b64img)
         tries += 1
-        if tries >= 3 break
+        if tries >= 3:
+            break
 
     print("=" * 74)
     print(img_path)
@@ -178,7 +179,6 @@ def process_one_img(r_img_dir: str, r_img: str) -> tuple[str, str, Bill] | None:
     print(bill)
     print("=" * 74)
 
-    # FIX: return data when bill is valid; return None when it isn't
     if bill:
         return img_path, ocr_result, bill
     else:
@@ -192,14 +192,20 @@ def main():
     valid_exts = {'.png', '.webp'}
     r_imgs = [
         i for i in os.listdir(raw_img_dir)
-        if not os.path.isdir(os.path.join(raw_img_dir, i))
-        and os.path.splitext(i)[1].lower() in valid_exts
+        if (not (os.path.isdir(os.path.join(raw_img_dir, i))) and (os.path.splitext(i)[1].lower() in valid_exts))
     ]
+
+    with open(label_file, 'rt', encoding='utf-8') as lf:
+        existing_datas = set()
+        for line in lf:
+            data = json.loads(line)
+            existing_datas.add(os.path.basename(data['image_path']))
+
+    r_imgs = [img for img in r_imgs if img not in existing_datas]
 
     results = []
     for item in r_imgs:
         one_image = process_one_img(raw_img_dir, item)
-        # FIX: append when result is valid (not None), discard failures
         if one_image:
             results.append(one_image)
 
