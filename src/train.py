@@ -2,11 +2,13 @@ import torch
 from transformers import AutoTokenizer
 from transformers import AutoModelForCausalLM
 from transformers import TrainingArguments
+from transformers import Trainer
+from transformers import default_data_collator
 from dataset import Dataset
 import json
 
 # Model & Preprocessor Loading
-model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen3.5-0.8b-Base", dtype = 'float32', device_map = 'mps')
+model = AutoModelForCausalLM.from_pretrained("Qwen/Qwen3.5-0.8b-Base", dtype = torch.float32, device_map = 'mps')
 tokenizer = AutoTokenizer.from_pretrained("Qwen/Qwen3.5-0.8b-Base")
 if tokenizer.pad_token is None: # Just In Case
     tokenizer.pad_token = tokenizer.eos_token 
@@ -70,5 +72,29 @@ train_idx, test_idx = indices[:split], indices[split:]
 train_dataset = ReceiptDataset(input_ids_tokenized[train_idx], attention_mask[train_idx], labels[train_idx])
 test_dataset  = ReceiptDataset(input_ids_tokenized[test_idx],  attention_mask[test_idx],  labels[test_idx] ) # PyTorch advanced indexing: tensors accept a list of indices directly
 
+# Training
+training_arguments = TrainingArguments(
+    output_dir="qwen3.5-rr",
+    num_train_epochs=3,
+    per_device_train_batch_size=2,
+    gradient_accumulation_steps=8,
+    gradient_checkpointing=True,
+    fp16=False,
+    bf16=False,
+    learning_rate=2e-5,
+    logging_steps=10,
+    eval_strategy="epoch",
+    save_strategy="epoch",
+    load_best_model_at_end=True,
+)
 
+trainer = Trainer(
+    model=model,
+    args=training_arguments,
+    train_dataset=train_dataset,
+    eval_dataset=test_dataset,
+    data_collator=default_data_collator,
+    processing_class=tokenizer,
+)
 
+trainer.train()
