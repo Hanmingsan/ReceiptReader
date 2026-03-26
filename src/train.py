@@ -1,3 +1,4 @@
+import torch
 from transformers import AutoTokenizer
 from transformers import AutoModelForCausalLM
 from transformers import TrainingArguments
@@ -49,7 +50,7 @@ class ReceiptDataset(Dataset):
     def __init__(self, input_ids_tokenized, attention_mask, labels):
         self.input_ids = input_ids_tokenized
         self.attention_mask = attention_mask
-        self.label = labels
+        self.labels = labels
     def __len__(self):
         return len(self.labels)
     def __getitem__(self, idx):
@@ -59,7 +60,15 @@ class ReceiptDataset(Dataset):
             "labels": self.labels[idx],
         }
 
-# Training Sector
+## Train/Test Split
+TRAIN_RATIO = 0.8
+n = len(input_ids_tokenized)
+indices = torch.randperm(n)
+split = int(n * TRAIN_RATIO)
+train_idx, test_idx = indices[:split], indices[split:]
+
+train_dataset = ReceiptDataset(input_ids_tokenized[train_idx], attention_mask[train_idx], labels[train_idx])
+test_dataset  = ReceiptDataset(input_ids_tokenized[test_idx],  attention_mask[test_idx],  labels[test_idx] ) # PyTorch advanced indexing: tensors accept a list of indices directly
 
 
 
